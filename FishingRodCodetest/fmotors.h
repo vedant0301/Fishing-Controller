@@ -10,9 +10,9 @@
 SETTINGs
 ************************************************************************************************/
 // DC MOTOR pins
-#define IN1 12
-#define IN2 13
-#define ENA 11 // 0-255
+// #define IN1 12
+// #define IN2 13
+#define ENA 9 // 0-255
 
 // Push button motor pins
 const int IN3 = A0;

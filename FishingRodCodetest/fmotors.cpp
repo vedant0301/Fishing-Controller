@@ -50,7 +50,7 @@ void updateReelAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
         showColor(0, 255, 0, numberofLEDs, pin);
         // digitalWrite(IN1, LOW);
         // digitalWrite(IN2, HIGH);
-        analogWrite(9, 55 + 20 * (numberofLEDs - 1));
+        analogWrite(ENA, 55 + 20 * (numberofLEDs - 1));
         oldLEDnum = numberofLEDs;
     }
 }
