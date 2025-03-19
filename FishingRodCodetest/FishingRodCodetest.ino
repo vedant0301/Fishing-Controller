@@ -195,8 +195,7 @@ ISR(PCINT2_vect) {
     // This ISR will be triggered when any pin change occurs on PCINT[23:16] group
     if (digitalRead(greenButton) == LOW) {
       // Handle green button press
-      //EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, reelFlag);/* The bits being set. */
-      EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, powerFlag);/* The bits being set. */
+      EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, reelFlag);/* The bits being set. */
       Serial.println("green");
     } else if (digitalRead(blueButton) == LOW) {
       // Handle blue button press
@@ -204,7 +203,8 @@ ISR(PCINT2_vect) {
       //Serial.println("green");
     } else if (digitalRead(redButton) == LOW) {
       // Handle red button press
-      EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, emergencyFlag);/* The bits being set. */
+      //EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, emergencyFlag);/* The bits being set. */
+      EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, powerFlag);/* The bits being set. */
       Serial.println("red");
     } else if (digitalRead(powerButton) == LOW) {
       // Handle power button press
@@ -268,6 +268,7 @@ void TaskStart( void *pvParameters __attribute__((unused)) )  // This is a Task.
       xEventGroupClearBits(fishingrodEvents, allFlags);
 
       //solenoidOff();
+      pressButton();
 
       LEDStripColor(LEDStripOFF, dataPin1);
 
@@ -346,10 +347,14 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
       // We were able to obtain or "Take" the semaphore and can now access the shared resource. so we don't want it getting stolen during the middle of a conversion.
 
       //pressButton();
+      releaseButton();
+      vTaskDelay(pdMS_TO_TICKS(1500));
+      solenoidOff();
 
       xTimerStart(castTimer, 0);
       uint8_t distance = 0;
       uint8_t oldLEDnum = 20;
+      //pressButton();
       while(1){
         if((reelFlag | emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
           xTimerStop(castTimer, 0);
@@ -357,6 +362,8 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
         }
         updateDistanceAndLEDs(joystickValue, oldLEDnum, dataPin1);
       }
+      //releaseButton();
+      
       xEventGroupClearBits(fishingrodEvents, castFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.
       xSemaphoreGive( xreelmotorMutex );

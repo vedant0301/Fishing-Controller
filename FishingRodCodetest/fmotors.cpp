@@ -1,4 +1,5 @@
 #include "fmotors.h"
+int casted;
 
 void fmotors_setup() {
   // DC MOTOR
@@ -15,6 +16,8 @@ void fmotors_setup() {
   digitalWrite(IN4, LOW);
 
   Stepper_Motor_setup();
+
+  casted = 0;
 }
 
 void updateReelAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
@@ -59,7 +62,7 @@ void updateReelAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
 void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     int distance;
     uint8_t numberofLEDs;
-    int casted = 0;
+    int exit = 0;
 
     // Determine distance based on joystickValue
     if (joystickValue < 113) {
@@ -93,16 +96,19 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
         if(numberofLEDs == 1){
           casted = 0;
         }
-        if((oldLEDnum > numberofLEDs) && (oldLEDnum!=20) && (casted == 0) ){
+        if((oldLEDnum > numberofLEDs) && (oldLEDnum!=20) && (casted == 0)){
           xTimerStop(castTimer, 0);
           //taskENTER_CRITICAL(); // Disable task switching
           //taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
           Casting(oldLEDnum);
           casted = 1;
+          //pressButton();
           
           //taskENABLE_INTERRUPTS();
           //taskEXIT_CRITICAL(); // Enable task switching
           xTimerStart(castTimer, 0);
+          vTaskDelay(pdMS_TO_TICKS(400));
+          pressButton();
         }
         oldLEDnum = numberofLEDs;
     }
@@ -149,8 +155,7 @@ void Casting(int Desi_Dist) {
   digitalWrite(Aminus, LOW);
   digitalWrite(Bplus, LOW);
   digitalWrite(Bminus, LOW);
-  //vTaskDelay(pdMS_TO_TICKS(10));
-  //delay(10000000);
+
 }
 //==============================================
 void pressButton() {
