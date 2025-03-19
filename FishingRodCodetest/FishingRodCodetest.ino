@@ -16,7 +16,7 @@ const uint8_t blueButton = 5;
 const uint8_t greenButton = 6;
 const uint8_t redButton = 7;
 
-const uint8_t joyStick = A2;//A3;
+const uint8_t joyStick = A2;
 
 /************************************************************************************************
 
