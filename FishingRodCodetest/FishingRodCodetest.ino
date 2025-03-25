@@ -319,7 +319,7 @@ void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
      // motorsOFF();
       // digitalWrite(IN1, LOW);
       // digitalWrite(IN2, LOW);
-      // analogWrite(ENA, 0);
+      analogWrite(ENA, 0);
       xEventGroupClearBits(fishingrodEvents, reelFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.
       xSemaphoreGive( xreelmotorMutex );
@@ -348,8 +348,6 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
 
       //pressButton();
       releaseButton();
-      vTaskDelay(pdMS_TO_TICKS(1500));
-      solenoidOff();
 
       xTimerStart(castTimer, 0);
       uint8_t distance = 0;
@@ -363,6 +361,7 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
         updateDistanceAndLEDs(joystickValue, oldLEDnum, dataPin1);
       }
       //releaseButton();
+      pressButton();
       
       xEventGroupClearBits(fishingrodEvents, castFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.

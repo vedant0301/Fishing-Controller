@@ -58,11 +58,9 @@ void updateReelAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     }
 }
 
-
 void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     int distance;
     uint8_t numberofLEDs;
-    int exit = 0;
 
     // Determine distance based on joystickValue
     if (joystickValue < 113) {
@@ -88,31 +86,139 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     }
 
     // Calculate number of LEDs
-    numberofLEDs = (distance * 2) / 10 ;
+    numberofLEDs = (distance * 2) / 10;
 
-    // Update LEDs only if number of LEDs changes or oldLEDnum is 20
-    if ((numberofLEDs != oldLEDnum) || (oldLEDnum == 20)) {
+    // Update LEDs only if numberofLEDs changes
+    if (numberofLEDs != oldLEDnum) {
         showColor(0, 0, 255, numberofLEDs, pin); // Set LEDs to blue
-        if(numberofLEDs == 1){
-          casted = 0;
-        }
-        if((oldLEDnum > numberofLEDs) && (oldLEDnum!=20) && (casted == 0)){
-          xTimerStop(castTimer, 0);
-          //taskENTER_CRITICAL(); // Disable task switching
-          //taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
-          Casting(oldLEDnum);
-          casted = 1;
-          //pressButton();
-          
-          //taskENABLE_INTERRUPTS();
-          //taskEXIT_CRITICAL(); // Enable task switching
-          xTimerStart(castTimer, 0);
-          vTaskDelay(pdMS_TO_TICKS(400));
-          pressButton();
-        }
-        oldLEDnum = numberofLEDs;
     }
+
+    // **Track highest reached LED count**
+    static uint8_t maxLEDnum = 1;
+    if (numberofLEDs > maxLEDnum) {
+        maxLEDnum = numberofLEDs;  // Store highest LED count
+    }
+
+    // **Ensure user moves joystick before first cast**
+    static bool mustStartAtOne = true;
+    static bool movedAwayFromOne = false;
+
+    if (numberofLEDs == 1) {
+        if (!movedAwayFromOne) {
+            mustStartAtOne = true; // Still need to move up first
+        }
+    } else {
+        movedAwayFromOne = true; // User has moved joystick up
+    }
+
+    if (oldLEDnum == 1 && movedAwayFromOne) {
+        mustStartAtOne = false;
+    }
+
+    // **Casting happens based on the highest LED count reached**
+    if (!mustStartAtOne && numberofLEDs == 1 && casted == 0) {
+        casted = 1;  // Prevent multiple triggers
+        xTimerStop(castTimer, 0);
+        Casting(maxLEDnum);  // Cast using highest LED count reached
+        //vTaskDelay(pdMS_TO_TICKS(100));  // Small delay to avoid retriggering
+        xTimerStart(castTimer, 0);
+        vTaskDelay(pdMS_TO_TICKS(190));
+        pressButton();
+
+        // **Reset maxLEDnum after casting**
+        maxLEDnum = 1;
+    }
+
+    // Reset casted flag if joystick moves away from casting zone (more than 1 LED)
+    if (numberofLEDs > 1) {
+        casted = 0;
+    }
+
+    // Update old LED number for next iteration
+    oldLEDnum = numberofLEDs;
 }
+
+
+// void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
+//     int distance;
+//     uint8_t numberofLEDs;
+
+//     // Determine distance based on joystickValue
+//     if (joystickValue < 113) {
+//         distance = 5;
+//     } else if (joystickValue < 169) {
+//         distance = 10;
+//     } else if (joystickValue < 282) {
+//         distance = 15;
+//     } else if (joystickValue < 395) {
+//         distance = 20;
+//     } else if (joystickValue < 508) {
+//         distance = 25;
+//     } else if (joystickValue < 621) {
+//         distance = 30;
+//     } else if (joystickValue < 734) {
+//         distance = 35;
+//     } else if (joystickValue < 847) {
+//         distance = 40;
+//     } else if (joystickValue < 960) {
+//         distance = 45;
+//     } else {
+//         distance = 50;
+//     }
+
+//     // Calculate number of LEDs
+//     numberofLEDs = (distance * 2) / 10;
+
+//     // Update LEDs only if number of LEDs changes
+//     if (numberofLEDs != oldLEDnum) {
+//         showColor(0, 0, 255, numberofLEDs, pin); // Set LEDs to blue
+//     }
+
+//     // **Force user to move joystick before allowing first cast**
+//     static bool mustStartAtOne = true;
+//     static bool movedAwayFromOne = false;  // Track if user moved joystick up
+
+//     if (numberofLEDs == 1) {
+//         if (!movedAwayFromOne) {
+//             mustStartAtOne = true; // Still need to move up first
+//         }
+//     } else {
+//         movedAwayFromOne = true; // User has moved joystick up
+//     }
+
+//     // If joystick was at 1 LED at the beginning, require movement before casting
+//     if (oldLEDnum == 1 && movedAwayFromOne) {
+//         mustStartAtOne = false;
+//     }
+
+//     // Casting only happens if we started at 1 LED, moved up, and came back to 1
+//     if (!mustStartAtOne && numberofLEDs == 1 && casted == 0) {
+//         casted = 1;  // Prevent multiple triggers
+//         xTimerStop(castTimer, 0);
+//         Casting(oldLEDnum);  
+//         vTaskDelay(pdMS_TO_TICKS(100));  // Small delay to avoid rapid retriggering
+//         xTimerStart(castTimer, 0);
+//         vTaskDelay(pdMS_TO_TICKS(400));
+//         pressButton();  
+//     }
+
+//     // Reset casted flag if joystick moves away from the casting zone (more than 1 LED)
+//     if (numberofLEDs > 1) {
+//         casted = 0;
+//     }
+
+//     // Update old LED number for next iteration
+//     oldLEDnum = numberofLEDs;
+// }
+
+// //taskENTER_CRITICAL(); // Disable task switching
+// //taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
+// Casting(oldLEDnum);
+// casted = 1;
+// //pressButton();
+
+// //taskENABLE_INTERRUPTS();
+// //taskEXIT_CRITICAL(); // Enable task switching
 
 void Stepper_Motor_setup() {
   pinMode(Aplus, OUTPUT);
@@ -151,6 +257,7 @@ void Casting(int Desi_Dist) {
     vTaskDelay(pdMS_TO_TICKS(10));
     Cur_Dist++;
   }
+  vTaskDelay(pdMS_TO_TICKS(2000));
   digitalWrite(Aplus, LOW);
   digitalWrite(Aminus, LOW);
   digitalWrite(Bplus, LOW);
