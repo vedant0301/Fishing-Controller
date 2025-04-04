@@ -7,8 +7,8 @@
 /************************************************************************************************
 SETTINGs
 ************************************************************************************************/
-#define casttimerPeriod pdMS_TO_TICKS(500)// milli secs // joystick 
-#define reeltimerPeriod pdMS_TO_TICKS(500)// milli secs // joystick 
+#define casttimerPeriod pdMS_TO_TICKS(200)// milli secs // joystick 
+#define reeltimerPeriod pdMS_TO_TICKS(200)// milli secs // joystick 
 
 //pins
 const uint8_t powerButton = 4;
@@ -246,13 +246,6 @@ void TaskStart( void *pvParameters __attribute__((unused)) )  // This is a Task.
       xEventGroupClearBits(fishingrodEvents, allFlags);
 
       LEDStripColor(LEDStripDIMYELLOW, dataPin1);
-      //set Motor values to default
-      //solenoidOff();
-
-      //motorsOFF();
-      // digitalWrite(IN1, LOW);
-      // digitalWrite(IN2, LOW);
-      // analogWrite(ENA, 0);
 
       vTaskDelay(pdMS_TO_TICKS(50));
 
@@ -264,18 +257,14 @@ void TaskStart( void *pvParameters __attribute__((unused)) )  // This is a Task.
 
     }
     else{
-      //Serial.println("OFF");
       xEventGroupClearBits(fishingrodEvents, allFlags);
-
-      //solenoidOff();
-      pressButton();
 
       LEDStripColor(LEDStripOFF, dataPin1);
 
-      //motorsOFF();
-      // digitalWrite(IN1, LOW);
-      // digitalWrite(IN2, LOW);
-      analogWrite(9, 0);
+      releaseButton();
+      vTaskDelay(pdMS_TO_TICKS(500));
+
+      motorsOFF();
 
       vTaskDelay(pdMS_TO_TICKS(50));
 
@@ -294,10 +283,10 @@ void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
   {
     EventBits_t eventBits1 = xEventGroupWaitBits(fishingrodEvents, (startdoneFlag|reelFlag), pdFALSE, pdTRUE, portMAX_DELAY);
     if((eventBits1 & startdoneFlag) == startdoneFlag){
-      //Serial.println("start done reel");
+      //Serial.println("Start done flag");
     }
     if((eventBits1 & reelFlag) == reelFlag){
-       //Serial.println("Green Button");
+       //Serial.println("Reel flag set");
      }
     // See if we can obtain or "Take" the Serial Semaphore.
     if ( (xSemaphoreTake( xcastmotorMutex, portMAX_DELAY) && xSemaphoreTake( xreelmotorMutex, portMAX_DELAY)&& xSemaphoreTake( xplungermotorMutex, portMAX_DELAY)) == pdTRUE )
@@ -316,10 +305,9 @@ void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
         updateReelAndLEDs(joystickValue, oldLEDnum, dataPin1);//, IN1, IN2, ENA);
 
       }
-     // motorsOFF();
-      // digitalWrite(IN1, LOW);
-      // digitalWrite(IN2, LOW);
+      //reel motor off
       analogWrite(ENA, 0);
+
       xEventGroupClearBits(fishingrodEvents, reelFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.
       xSemaphoreGive( xreelmotorMutex );
@@ -346,13 +334,11 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
     {
       // We were able to obtain or "Take" the semaphore and can now access the shared resource. so we don't want it getting stolen during the middle of a conversion.
 
-      //pressButton();
-      releaseButton();
+      pressButton();
 
       xTimerStart(castTimer, 0);
       uint8_t distance = 0;
       uint8_t oldLEDnum = 20;
-      //pressButton();
       while(1){
         if((reelFlag | emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
           xTimerStop(castTimer, 0);
@@ -360,8 +346,8 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
         }
         updateDistanceAndLEDs(joystickValue, oldLEDnum, dataPin1);
       }
-      //releaseButton();
-      pressButton();
+      releaseButton();
+      vTaskDelay(pdMS_TO_TICKS(500));
       
       xEventGroupClearBits(fishingrodEvents, castFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.

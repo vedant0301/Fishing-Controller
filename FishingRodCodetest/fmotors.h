@@ -11,8 +11,8 @@
 SETTINGs
 ************************************************************************************************/
 // DC MOTOR pins
-#define IN1 12
-#define IN2 13
+// #define IN1 12
+// #define IN2 13
 #define ENA 9 // 0-255
 
 // Push button motor pins
@@ -31,7 +31,9 @@ const int IN4 = A1;
 
 extern TimerHandle_t castTimer;
 extern EventGroupHandle_t fishingrodEvents;
+
 #define powerFlag ( 1 << 1 )
+#define emergencyFlag ( 1 << 2 )
 
 void fmotors_setup();
 

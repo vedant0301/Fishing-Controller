@@ -3,11 +3,11 @@ int casted;
 
 void fmotors_setup() {
   // DC MOTOR
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
+  // pinMode(IN1, OUTPUT);
+  // pinMode(IN2, OUTPUT);
   pinMode(ENA, OUTPUT);
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
+  // digitalWrite(IN1, LOW);
+  // digitalWrite(IN2, LOW);
   analogWrite(ENA, 0);
   // Push Button Motor
   pinMode(IN3, OUTPUT);
@@ -123,7 +123,7 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
         //vTaskDelay(pdMS_TO_TICKS(100));  // Small delay to avoid retriggering
         xTimerStart(castTimer, 0);
         vTaskDelay(pdMS_TO_TICKS(190));
-        pressButton();
+        releaseButton();
 
         // **Reset maxLEDnum after casting**
         maxLEDnum = 1;
@@ -137,79 +137,6 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     // Update old LED number for next iteration
     oldLEDnum = numberofLEDs;
 }
-
-
-// void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
-//     int distance;
-//     uint8_t numberofLEDs;
-
-//     // Determine distance based on joystickValue
-//     if (joystickValue < 113) {
-//         distance = 5;
-//     } else if (joystickValue < 169) {
-//         distance = 10;
-//     } else if (joystickValue < 282) {
-//         distance = 15;
-//     } else if (joystickValue < 395) {
-//         distance = 20;
-//     } else if (joystickValue < 508) {
-//         distance = 25;
-//     } else if (joystickValue < 621) {
-//         distance = 30;
-//     } else if (joystickValue < 734) {
-//         distance = 35;
-//     } else if (joystickValue < 847) {
-//         distance = 40;
-//     } else if (joystickValue < 960) {
-//         distance = 45;
-//     } else {
-//         distance = 50;
-//     }
-
-//     // Calculate number of LEDs
-//     numberofLEDs = (distance * 2) / 10;
-
-//     // Update LEDs only if number of LEDs changes
-//     if (numberofLEDs != oldLEDnum) {
-//         showColor(0, 0, 255, numberofLEDs, pin); // Set LEDs to blue
-//     }
-
-//     // **Force user to move joystick before allowing first cast**
-//     static bool mustStartAtOne = true;
-//     static bool movedAwayFromOne = false;  // Track if user moved joystick up
-
-//     if (numberofLEDs == 1) {
-//         if (!movedAwayFromOne) {
-//             mustStartAtOne = true; // Still need to move up first
-//         }
-//     } else {
-//         movedAwayFromOne = true; // User has moved joystick up
-//     }
-
-//     // If joystick was at 1 LED at the beginning, require movement before casting
-//     if (oldLEDnum == 1 && movedAwayFromOne) {
-//         mustStartAtOne = false;
-//     }
-
-//     // Casting only happens if we started at 1 LED, moved up, and came back to 1
-//     if (!mustStartAtOne && numberofLEDs == 1 && casted == 0) {
-//         casted = 1;  // Prevent multiple triggers
-//         xTimerStop(castTimer, 0);
-//         Casting(oldLEDnum);  
-//         vTaskDelay(pdMS_TO_TICKS(100));  // Small delay to avoid rapid retriggering
-//         xTimerStart(castTimer, 0);
-//         vTaskDelay(pdMS_TO_TICKS(400));
-//         pressButton();  
-//     }
-
-//     // Reset casted flag if joystick moves away from the casting zone (more than 1 LED)
-//     if (numberofLEDs > 1) {
-//         casted = 0;
-//     }
-
-//     // Update old LED number for next iteration
-//     oldLEDnum = numberofLEDs;
-// }
 
 // //taskENTER_CRITICAL(); // Disable task switching
 // //taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
@@ -225,6 +152,10 @@ void Stepper_Motor_setup() {
   pinMode(Aminus, OUTPUT);
   pinMode(Bplus, OUTPUT);
   pinMode(Bminus, OUTPUT);
+  digitalWrite(Aplus, LOW);
+  digitalWrite(Aminus, LOW);
+  digitalWrite(Bplus, LOW);
+  digitalWrite(Bminus, LOW);
 }
 void Casting(int Desi_Dist) {
   int Cur_Dist = 0;
@@ -256,6 +187,15 @@ void Casting(int Desi_Dist) {
     //delay(10);
     vTaskDelay(pdMS_TO_TICKS(10));
     Cur_Dist++;
+    if((emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
+      xTimerStop(castTimer, 0);
+      digitalWrite(Aplus, LOW);
+      digitalWrite(Aminus, LOW);
+      digitalWrite(Bplus, LOW);
+      digitalWrite(Bminus, LOW);
+      //Serial.println("out");
+      break;
+    }
   }
   vTaskDelay(pdMS_TO_TICKS(2000));
   digitalWrite(Aplus, LOW);
@@ -266,13 +206,13 @@ void Casting(int Desi_Dist) {
 }
 //==============================================
 void pressButton() {
-  digitalWrite(A0, HIGH);
-  digitalWrite(A1, LOW);
+  digitalWrite(A0, LOW);
+  digitalWrite(A1, HIGH);
 }
 //==============================================
 void releaseButton() {
-  digitalWrite(A0, LOW);
-  digitalWrite(A1, HIGH);
+  digitalWrite(A0, HIGH);
+  digitalWrite(A1, LOW);
 }
 
 void solenoidOff() {
@@ -281,8 +221,14 @@ void solenoidOff() {
 }
 
 void motorsOFF() {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, LOW);
-    analogWrite(ENA, 0);
+  //reeling motor off
+  analogWrite(ENA, 0);
+  //thumb button motor off
+  solenoidOff();
+  //stepper motor off
+  digitalWrite(Aplus, LOW);
+  digitalWrite(Aminus, LOW);
+  digitalWrite(Bplus, LOW);
+  digitalWrite(Bminus, LOW);
 }
 

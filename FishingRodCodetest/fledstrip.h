@@ -18,6 +18,18 @@ const int numLEDs = 10; // Number of LEDs in the strip
 //LED strip pins
 #define dataPin1  2 // led strip 1
 #define dataPin2  0 // led strip 2
+
+/*
+struct LEDs{
+  uint8_t Red;
+  uint8_t Green;
+  uint8_t Blue;
+  uint8_t NumLed;
+  uint8_t pin;
+  bool update;
+}
+
+*/
 /************************************************************************************************
 
 ************************************************************************************************/
