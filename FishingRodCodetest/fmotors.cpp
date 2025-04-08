@@ -138,6 +138,71 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     oldLEDnum = numberofLEDs;
 }
 
+// void NEWupdateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin){
+//     // Determine distance based on joystickValue
+//     bool castON = false;
+//     int steps = 0;
+//     int numberofLEDs = 0;
+//     if (joystickValue < 500) {
+//         castON = false;
+//     } 
+//     else {
+//         castON = true;
+//     }
+
+//     showColor(0, 0, 255, numberofLEDs, pin); // Set LEDs to blue
+
+//     // **Casting happens based on the highest LED count reached**
+//     while (castON) {
+//         xTimerStop(castTimer, 0);
+//         step();
+//         steps++;
+//         if (steps % 100 == 0 && numberofLEDs < 10) {
+//             numberofLEDs++;
+//             showColor(0, 0, 255, numberofLEDs, pin); // Update LED color
+//         }
+//         if ((emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
+//             digitalWrite(Aplus, LOW);
+//             digitalWrite(Aminus, LOW);
+//             digitalWrite(Bplus, LOW);
+//             digitalWrite(Bminus, LOW);
+//             releaseButton();
+//             break;
+//         }
+//         if((steps > 1200) | (analogRead(A2) <= 500)){
+//             digitalWrite(Aplus, LOW);
+//             digitalWrite(Aminus, LOW);
+//             digitalWrite(Bplus, LOW);
+//             digitalWrite(Bminus, LOW);
+//             vTaskDelay(pdMS_TO_TICKS(190));
+//             releaseButton();
+//             break;
+//         }
+//     }
+//     xTimerStart(castTimer, 0);
+// }
+// void step(){
+//     static bool A = 0;
+//     static bool B = 0;
+//     if (A && B) {
+//       B = 0;
+//       digitalWrite(Bplus, LOW);
+//       digitalWrite(Bminus, HIGH);
+//     } else if (A && !B) {
+//       A = 0;
+//       digitalWrite(Aplus, LOW);
+//       digitalWrite(Aminus, HIGH);
+//     } else if (!A && B) {
+//       A = 1;
+//       digitalWrite(Aminus, LOW);
+//       digitalWrite(Aplus, HIGH);
+//     } else if (!A && !B) {
+//       B = 1;
+//       digitalWrite(Bminus, LOW);
+//       digitalWrite(Bplus, HIGH);
+//     }
+//     vTaskDelay(pdMS_TO_TICKS(10));
+//   }
 // //taskENTER_CRITICAL(); // Disable task switching
 // //taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
 // Casting(oldLEDnum);
@@ -185,7 +250,7 @@ void Casting(int Desi_Dist) {
       digitalWrite(Bplus, HIGH);  
     }
     //delay(10);
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(5));
     Cur_Dist++;
     if((emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
       xTimerStop(castTimer, 0);
@@ -200,6 +265,7 @@ void Casting(int Desi_Dist) {
   vTaskDelay(pdMS_TO_TICKS(2000));
   digitalWrite(Aplus, LOW);
   digitalWrite(Aminus, LOW);
+  vTaskDelay(pdMS_TO_TICKS(1));
   digitalWrite(Bplus, LOW);
   digitalWrite(Bminus, LOW);
 

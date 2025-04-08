@@ -49,4 +49,7 @@ void pressButton();
 void releaseButton();
 void solenoidOff();
 
+void step();
+void NEWupdateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin);
+
 #endif // FMOTORS_H

@@ -3,8 +3,10 @@
 void LEDStrip_setup(){
   pinMode(dataPin1, OUTPUT);
   resetStrip(dataPin1);
+  //showColor(0, 0, 0, 0, dataPin1);
   pinMode(dataPin2, OUTPUT);
   resetStrip(dataPin2);
+  //showColor(0, 0, 0, 0, dataPin1);
 }
 
 // ** Reset signal to latch new data **
