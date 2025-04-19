@@ -3,13 +3,13 @@
 void LEDStrip_setup(){
   pinMode(dataPin1, OUTPUT);
   resetStrip(dataPin1);
-  //showColor(0, 0, 0, 0, dataPin1);
+  showColor(0, 0, 0, 0, dataPin1);
   pinMode(dataPin2, OUTPUT);
   resetStrip(dataPin2);
-  //showColor(0, 0, 0, 0, dataPin1);
+  showColor(0, 0, 0, 0, dataPin1);
 }
 
-// ** Reset signal to latch new data **
+// Reset signal to latch new data
 void resetStrip(int pin) {
     digitalWrite(pin, LOW);
     delayMicroseconds(300);  // WS2812B reset requires >50µs LOW
@@ -63,21 +63,21 @@ void sendBit(bool bitVal, int pin) {
 }
 
 
-// ** Send 8-bit data (MSB first) **
+// Send 8-bit data (MSB first)
 void sendByte(uint8_t byte, int pin) {
     for (int i = 7; i >= 0; i--) {
         sendBit(byte & (1 << i), pin);  // MSB First
     }
 }
 
-// ** Send a single LED color (GRB order) **
+// Send a single LED color (GRB order)
 void sendColor(uint8_t r, uint8_t g, uint8_t b, int pin) {
     sendByte(g, pin);  // GRB order
     sendByte(r, pin);
     sendByte(b, pin);
 }
 
-// ** Send color to all numLEDs **
+// Send color to all numLEDs
 void showColor(uint8_t r, uint8_t g, uint8_t b, int numLEDsToShow, int pin) {
 //     for (int i = 0; i < numLEDsToShow; i++) {
 //         sendColor(r, g, b, pin);
@@ -90,7 +90,7 @@ void showColor(uint8_t r, uint8_t g, uint8_t b, int numLEDsToShow, int pin) {
         // Send color data for the specified number of LEDs
         for (int i = 0; i < numLEDsToShow; i++) {
         sendColor(r, g, b, pin);
-    }
+        }
 
         // Send "off" (0, 0, 0) for the remaining LEDs on the strip to prevent white
         for (int i = numLEDsToShow; i < 10; i++) { // Assuming strip has max 10 LEDs
@@ -105,16 +105,16 @@ void showColor(uint8_t r, uint8_t g, uint8_t b, int numLEDsToShow, int pin) {
 }
 
 
-// ** Set LED strip color **
+// Set LED strip color
 void LEDStripColor(uint8_t color, int pin) {
     if (color == LEDStripRED) {
-        showColor(255, 0, 0, 10, pin); // RED in GRB order
+        showColor(32, 0, 0, 10, pin); // RED in GRB order
     } 
     else if (color == LEDStripOFF) {
-        showColor(0, 0, 0, 10, pin);
+        showColor(0, 0, 0, 10, pin); // OFF
     }
     else if (color == LEDStripDIMYELLOW) {
-        showColor(128, 128, 0, 10, pin); // Dim Yellow (Lower brightness)
+        showColor(32, 32, 0, 10, pin); // Dim Yellow (Lower brightness)
     } 
     else if (color == LEDStripBRIGHTYELLOW) {
         showColor(255, 255, 0, 10, pin); // Bright Yellow

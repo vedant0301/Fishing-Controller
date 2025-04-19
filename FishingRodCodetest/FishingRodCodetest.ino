@@ -7,8 +7,8 @@
 /************************************************************************************************
 SETTINGs
 ************************************************************************************************/
-#define casttimerPeriod pdMS_TO_TICKS(200)// milli secs // joystick 
-#define reeltimerPeriod pdMS_TO_TICKS(200)// milli secs // joystick 
+#define casttimerPeriod pdMS_TO_TICKS(200)// milli secs
+#define reeltimerPeriod pdMS_TO_TICKS(200)// milli secs
 
 //pins
 const uint8_t powerButton = 4;
@@ -23,8 +23,6 @@ const uint8_t joyStick = A2;
 ************************************************************************************************/
 
 // //DC MOTOR
-// #define IN1 12
-// #define IN2 13
 // #define ENA 11
 
 //leds strip
@@ -70,7 +68,7 @@ void TaskEmergencyMode( void *pvParameters );
 void setup() {
   LEDStrip_setup();
 
-  //fmotors_setup();
+  fmotors_setup();
   // // DC MOTOR
   // pinMode(IN1, OUTPUT);
   // pinMode(IN2, OUTPUT);
@@ -85,10 +83,12 @@ void setup() {
   // digitalWrite(IN3, LOW);
   // digitalWrite(IN4, LOW);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial.println("serial");
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and other 32u4 based boards.
   }
+  Serial.println("serial done");
   pinMode(powerButton, INPUT_PULLUP);
   pinMode(blueButton, INPUT_PULLUP);
   pinMode(greenButton, INPUT_PULLUP);
@@ -182,6 +182,7 @@ void setup() {
     , 0
     , reeltimerCallback);
   //xTimerStart(reelTimer, 0);
+  Serial.println("setup done");
 }
 
 void loop() {
@@ -203,8 +204,7 @@ ISR(PCINT2_vect) {
       //Serial.println("green");
     } else if (digitalRead(redButton) == LOW) {
       // Handle red button press
-      //EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, emergencyFlag);/* The bits being set. */
-      EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, powerFlag);/* The bits being set. */
+      EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, emergencyFlag);/* The bits being set. */
       Serial.println("red");
     } else if (digitalRead(powerButton) == LOW) {
       // Handle power button press
@@ -223,55 +223,29 @@ void reeltimerCallback(TimerHandle_t reelTimer){
   //Serial.println(joystickValue);
 }
 
-void TaskStart( void *pvParameters __attribute__((unused)) )  // This is a Task.
-{
+void TaskStart( void *pvParameters __attribute__((unused)) ){
   /*
     TaskStart
   */
-  uint8_t oNofF = 0;
-  LEDStripColor(LEDStripOFF, dataPin1);
-  LEDStripColor(LEDStripOFF, dataPin2);
-  for (;;) // A Task shall never return or exit.
-  {
-    EventBits_t eventBits = xEventGroupWaitBits(fishingrodEvents, powerFlag, pdFALSE, pdTRUE, portMAX_DELAY);
-    if((eventBits & powerFlag) == powerFlag){
-      //Serial.println("Power Button task");
-    }
-    oNofF ^= 1;
-    // See if we can obtain or "Take" the Serial Semaphore. // If the semaphore is not available, wait Scheduler to see if it becomes free.
-    if ( ((xSemaphoreTake( xcastmotorMutex, portMAX_DELAY) && xSemaphoreTake( xreelmotorMutex, portMAX_DELAY)&& xSemaphoreTake( xplungermotorMutex, portMAX_DELAY)) == pdTRUE) && oNofF )
-    {
-      // We were able to obtain or "Take" the semaphore and can now access the shared resource. so we don't want it getting stolen during the middle of a conversion.
-      Serial.println("ON");
+ for (;;){
+      Serial.println("TaskStart");
+      LEDStripColor(LEDStripDIMYELLOW, dataPin1);
       xEventGroupClearBits(fishingrodEvents, allFlags);
 
-      LEDStripColor(LEDStripDIMYELLOW, dataPin1);
+      //taskENTER_CRITICAL(); // Disable task switching
+      //taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
+      releaseButton();
+      vTaskDelay(pdMS_TO_TICKS(500));
+      solenoidOff();
+      //taskENTER_CRITICAL(); // Disable task switching
+      //taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
 
-      vTaskDelay(pdMS_TO_TICKS(50));
 
-      xEventGroupClearBits(fishingrodEvents, powerFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.
       xSemaphoreGive( xreelmotorMutex );
       xSemaphoreGive( xplungermotorMutex );
       EventBits_t eventBits = xEventGroupSetBits(fishingrodEvents, startdoneFlag);/* The bits being set. */
-
-    }
-    else{
-      xEventGroupClearBits(fishingrodEvents, allFlags);
-
-      LEDStripColor(LEDStripOFF, dataPin1);
-
-      releaseButton();
-      vTaskDelay(pdMS_TO_TICKS(500));
-
-      motorsOFF();
-
-      vTaskDelay(pdMS_TO_TICKS(50));
-
-      xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.
-      xSemaphoreGive( xreelmotorMutex );
-      xSemaphoreGive( xplungermotorMutex );
-    }
+      vTaskDelay(portMAX_DELAY);
   }
 }
 void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Task.
@@ -292,7 +266,7 @@ void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
     if ( (xSemaphoreTake( xcastmotorMutex, portMAX_DELAY) && xSemaphoreTake( xreelmotorMutex, portMAX_DELAY)&& xSemaphoreTake( xplungermotorMutex, portMAX_DELAY)) == pdTRUE )
     {
       // We were able to obtain or "Take" the semaphore and can now access the shared resource. so we don't want it getting stolen during the middle of a conversion.
-
+      releaseButton();
       //control motors
       xTimerStart(reelTimer, 0);
       uint8_t reelSpeed = 0;
@@ -307,6 +281,7 @@ void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
       }
       //reel motor off
       analogWrite(ENA, 0);
+      solenoidOff();
 
       xEventGroupClearBits(fishingrodEvents, reelFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.
@@ -346,8 +321,8 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
         }
         updateDistanceAndLEDs(joystickValue, oldLEDnum, dataPin1);
       }
-      releaseButton();
-      vTaskDelay(pdMS_TO_TICKS(500));
+      // releaseButton();
+      // vTaskDelay(pdMS_TO_TICKS(500));
       
       xEventGroupClearBits(fishingrodEvents, castFlag);
       xSemaphoreGive( xcastmotorMutex ); // Now free or "Give" the Serial Port for others.
@@ -376,14 +351,15 @@ void TaskEmergencyMode( void *pvParameters __attribute__((unused)) )  // This is
       // We were able to obtain or "Take" the semaphore and can now access the shared resource. so we don't want it getting stolen during the middle of a conversion.
 
       LEDStripColor(LEDStripRED, dataPin1);
+      taskENTER_CRITICAL(); // Disable task switching
+      taskDISABLE_INTERRUPTS(); // Disable interrupts to protect the critical section
+      motorsOFF();
+      releaseButton();
+      vTaskDelay(pdMS_TO_TICKS(1500));
+      solenoidOff();
+      taskENABLE_INTERRUPTS();
+      taskEXIT_CRITICAL(); // Enable task switching
 
-      //motorsOFF();
-      // digitalWrite(IN1, LOW);
-      // digitalWrite(IN2, LOW);
-      // analogWrite(ENA, 0);
-      //releaseButton();
-
-      vTaskDelay(pdMS_TO_TICKS(50));
 
       xEventGroupClearBits(fishingrodEvents, emergencyFlag);
 

@@ -3,11 +3,7 @@ int casted;
 
 void fmotors_setup() {
   // DC MOTOR
-  // pinMode(IN1, OUTPUT);
-  // pinMode(IN2, OUTPUT);
   pinMode(ENA, OUTPUT);
-  // digitalWrite(IN1, LOW);
-  // digitalWrite(IN2, LOW);
   analogWrite(ENA, 0);
   // Push Button Motor
   pinMode(IN3, OUTPUT);
@@ -25,35 +21,55 @@ void updateReelAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     uint8_t numberofLEDs;
 
     if (joystickValue < 113) {
-      reelSpeed = 5;
+      //reelSpeed = 5;
+        numberofLEDs = 1;
+        reelSpeed = 0;
     } else if (joystickValue < 169) {
-        reelSpeed = 10;
+        //reelSpeed = 10;
+        numberofLEDs = 2;
+        reelSpeed = 1;
     } else if (joystickValue < 282) {
-        reelSpeed = 15;
+        //reelSpeed = 15;
+        numberofLEDs = 3;
+        reelSpeed = 2;
     } else if (joystickValue < 395) {
-        reelSpeed = 20;
+        //reelSpeed = 20;
+        numberofLEDs = 4;
+        reelSpeed = 3;
     } else if (joystickValue < 508) {
-        reelSpeed = 25;
+        //reelSpeed = 25;
+        numberofLEDs = 5;
+        reelSpeed = 4;
     } else if (joystickValue < 621) {
-        reelSpeed = 30;
+        //reelSpeed = 30;
+        numberofLEDs = 6;
+        reelSpeed = 5;
     } else if (joystickValue < 734) {
-        reelSpeed = 35;
+        //reelSpeed = 35;
+        numberofLEDs = 7;
+        reelSpeed = 6;
     } else if (joystickValue < 847) {
-        reelSpeed = 40;
+        //reelSpeed = 40;
+        numberofLEDs = 8;
+        reelSpeed = 7;
     } else if (joystickValue < 960) {
-        reelSpeed = 45;
+        //reelSpeed = 45;
+        numberofLEDs = 9;
+        reelSpeed = 8;
     } else {
-        reelSpeed = 50;
+        //reelSpeed = 50;
+        numberofLEDs = 10;
+        reelSpeed = 9;
     }
     // Calculate number of LEDs
-    numberofLEDs = (reelSpeed * 2) / 10 ;
+    //numberofLEDs = (reelSpeed * 2) / 10 ;
 
     // Update LEDs and motor only if number of LEDs changes or oldLEDnum is 20
     if ((numberofLEDs != oldLEDnum) || (oldLEDnum == 20)) {
-        showColor(0, 255, 0, numberofLEDs, pin);
+        showColor(0, 32, 0, numberofLEDs, pin);
         // digitalWrite(IN1, LOW);
         // digitalWrite(IN2, HIGH);
-        analogWrite(ENA, 55 + 20 * (numberofLEDs - 1));
+        analogWrite(ENA, 28*reelSpeed);
         oldLEDnum = numberofLEDs;
     }
 }
@@ -90,7 +106,7 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
 
     // Update LEDs only if numberofLEDs changes
     if (numberofLEDs != oldLEDnum) {
-        showColor(0, 0, 255, numberofLEDs, pin); // Set LEDs to blue
+        showColor(0, 0, 32, numberofLEDs, pin); // Set LEDs to blue
     }
 
     // **Track highest reached LED count**
@@ -164,6 +180,7 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
 //         if ((emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
 //             digitalWrite(Aplus, LOW);
 //             digitalWrite(Aminus, LOW);
+//             vTaskDelay(pdMS_TO_TICKS(1));
 //             digitalWrite(Bplus, LOW);
 //             digitalWrite(Bminus, LOW);
 //             releaseButton();
@@ -172,6 +189,7 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
 //         if((steps > 1200) | (analogRead(A2) <= 500)){
 //             digitalWrite(Aplus, LOW);
 //             digitalWrite(Aminus, LOW);
+//             vTaskDelay(pdMS_TO_TICKS(1));
 //             digitalWrite(Bplus, LOW);
 //             digitalWrite(Bminus, LOW);
 //             vTaskDelay(pdMS_TO_TICKS(190));
@@ -227,48 +245,68 @@ void Casting(int Desi_Dist) {
   bool A = 0;
   bool B = 0;
   Desi_Dist = Desi_Dist*(1200/10);
+  taskDISABLE_INTERRUPTS();
   while(Cur_Dist <= Desi_Dist){
     Serial.println(Cur_Dist);
     if(A && B){
       B = 0;
       digitalWrite(Bplus, LOW);
+      Serial.println("1");//0.270ms
+      vTaskDelay(pdMS_TO_TICKS(1));
+      //Serial.println("2");
       digitalWrite(Bminus, HIGH);
     }
     else if(A && ~B){
       A = 0;
       digitalWrite(Aplus, LOW);
+      Serial.println("1");//0.270ms
+      vTaskDelay(pdMS_TO_TICKS(1));
+      //Serial.println("2");
       digitalWrite(Aminus, HIGH);
     }
     else if(~A && B){
       A = 1;
       digitalWrite(Aminus, LOW);
+      Serial.println("1");//0.270ms
+      vTaskDelay(pdMS_TO_TICKS(1));
+      //Serial.println("2");
       digitalWrite(Aplus, HIGH);
     }
     else if(~A && ~B){
       B = 1;
-      digitalWrite(Bminus, LOW);    
+      digitalWrite(Bminus, LOW);
+      Serial.println("1");//0.270ms
+      vTaskDelay(pdMS_TO_TICKS(1));
+      //Serial.println("2");
       digitalWrite(Bplus, HIGH);  
     }
     //delay(10);
-    vTaskDelay(pdMS_TO_TICKS(5));
+    Serial.println("abcdefghijklmnop");//~4ms
+    Serial.println("abc");//~1ms
+
+    vTaskDelay(pdMS_TO_TICKS(10));
     Cur_Dist++;
-    if((emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
+    if(digitalRead(redButton) == LOW){//((emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
       xTimerStop(castTimer, 0);
       digitalWrite(Aplus, LOW);
       digitalWrite(Aminus, LOW);
+            Serial.println("1");
+      vTaskDelay(pdMS_TO_TICKS(1));
       digitalWrite(Bplus, LOW);
       digitalWrite(Bminus, LOW);
-      //Serial.println("out");
-      break;
+      Serial.println("out");
+      taskENABLE_INTERRUPTS();
+      return;
     }
   }
   vTaskDelay(pdMS_TO_TICKS(2000));
   digitalWrite(Aplus, LOW);
   digitalWrite(Aminus, LOW);
+        Serial.println("1");
   vTaskDelay(pdMS_TO_TICKS(1));
   digitalWrite(Bplus, LOW);
   digitalWrite(Bminus, LOW);
-
+  taskENABLE_INTERRUPTS();
 }
 //==============================================
 void pressButton() {
@@ -294,6 +332,7 @@ void motorsOFF() {
   //stepper motor off
   digitalWrite(Aplus, LOW);
   digitalWrite(Aminus, LOW);
+  vTaskDelay(pdMS_TO_TICKS(1));
   digitalWrite(Bplus, LOW);
   digitalWrite(Bminus, LOW);
 }
