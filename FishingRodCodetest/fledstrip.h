@@ -33,9 +33,6 @@ struct LEDs{
 /************************************************************************************************
 
 ************************************************************************************************/
-// Semaphore for LED strip access
-extern SemaphoreHandle_t xLEDMutex;
-
 void LEDStrip_setup();
 
 // Function Declarations

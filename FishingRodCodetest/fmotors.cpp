@@ -61,14 +61,9 @@ void updateReelAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
         numberofLEDs = 10;
         reelSpeed = 9;
     }
-    // Calculate number of LEDs
-    //numberofLEDs = (reelSpeed * 2) / 10 ;
-
     // Update LEDs and motor only if number of LEDs changes or oldLEDnum is 20
     if ((numberofLEDs != oldLEDnum) || (oldLEDnum == 20)) {
         showColor(0, 32, 0, numberofLEDs, pin);
-        // digitalWrite(IN1, LOW);
-        // digitalWrite(IN2, HIGH);
         analogWrite(ENA, 28*reelSpeed);
         oldLEDnum = numberofLEDs;
     }
@@ -136,7 +131,6 @@ void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
         casted = 1;  // Prevent multiple triggers
         xTimerStop(castTimer, 0);
         Casting(maxLEDnum);  // Cast using highest LED count reached
-        //vTaskDelay(pdMS_TO_TICKS(100));  // Small delay to avoid retriggering
         xTimerStart(castTimer, 0);
         vTaskDelay(pdMS_TO_TICKS(190));
         releaseButton();

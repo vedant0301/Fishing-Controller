@@ -79,12 +79,7 @@ void sendColor(uint8_t r, uint8_t g, uint8_t b, int pin) {
 
 // Send color to all numLEDs
 void showColor(uint8_t r, uint8_t g, uint8_t b, int numLEDsToShow, int pin) {
-//     for (int i = 0; i < numLEDsToShow; i++) {
-//         sendColor(r, g, b, pin);
-//     }
-//     resetStrip(pin);
-// }
-    if (xSemaphoreTake(xLEDMutex, portMAX_DELAY) == pdTRUE) {
+
         taskENTER_CRITICAL(); // Disable task switching
 
         // Send color data for the specified number of LEDs
@@ -100,8 +95,6 @@ void showColor(uint8_t r, uint8_t g, uint8_t b, int numLEDsToShow, int pin) {
         resetStrip(pin);
         taskEXIT_CRITICAL(); // Enable task switching
 
-        xSemaphoreGive(xLEDMutex); // Release the mutex after updating LEDs
-    }
 }
 
 
