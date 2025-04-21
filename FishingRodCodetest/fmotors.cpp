@@ -290,8 +290,15 @@ void Casting(int Desi_Dist) {
       xTimerStop(castTimer, 0);
       digitalWrite(Aplus, LOW);
       digitalWrite(Aminus, LOW);
-            Serial.println("1");
+
+        Serial.println("abc");//~1ms
+        Serial.println("abcdefghijklmnop");//~4ms
+        Serial.println("abcdefghijklmnop");//~4ms
+        Serial.println("abcdefghijklmnop");//~4ms
+        Serial.println("abcdefghijklmnop");//~4ms
+        Serial.println("abcdefghijklmnop");//~4ms
       vTaskDelay(pdMS_TO_TICKS(1));
+
       digitalWrite(Bplus, LOW);
       digitalWrite(Bminus, LOW);
       Serial.println("out");
@@ -302,7 +309,14 @@ void Casting(int Desi_Dist) {
   vTaskDelay(pdMS_TO_TICKS(2000));
   digitalWrite(Aplus, LOW);
   digitalWrite(Aminus, LOW);
-        Serial.println("1");
+  
+  Serial.println("abc");//~1ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
+
   vTaskDelay(pdMS_TO_TICKS(1));
   digitalWrite(Bplus, LOW);
   digitalWrite(Bminus, LOW);
@@ -332,7 +346,15 @@ void motorsOFF() {
   //stepper motor off
   digitalWrite(Aplus, LOW);
   digitalWrite(Aminus, LOW);
+
+    Serial.println("abc");//~1ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
+  Serial.println("abcdefghijklmnop");//~4ms
   vTaskDelay(pdMS_TO_TICKS(1));
+  
   digitalWrite(Bplus, LOW);
   digitalWrite(Bminus, LOW);
 }
