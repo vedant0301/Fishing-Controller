@@ -34,6 +34,14 @@ const unsigned long debounceDelay = 200; // Set debounce time (in milliseconds)
 
 volatile uint16_t joystickValue = 0;
 
+volatile uint16_t pushButtoncount = 0;
+
+extern int casted;
+
+extern uint8_t maxLEDnum;
+extern bool hasBeenAtOneBefore;
+extern bool wentAboveOne;
+
 /* Declare a variable to hold the created event group. */
 EventGroupHandle_t fishingrodEvents;
 
@@ -112,6 +120,7 @@ void setup() {
     , pdTRUE
     , 0
     , casttimerCallback);
+  xTimerStart(castTimer, 0);
   Serial.println("setup done");
 }
 
@@ -147,6 +156,9 @@ void casttimerCallback(TimerHandle_t castTimer){
   //Serial.println("READ CAST TIMER");
   joystickValue = analogRead(joyStick);
   //Serial.println(joystickValue);
+  if(pushButtoncount <= 8) {
+    pushButtoncount++;
+  }
 }
 void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Task.
 {
@@ -177,10 +189,10 @@ void TaskReelMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
       while(1){
         if((castFlag | emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
           xTimerStop(castTimer, 0);
+          //casted = 0;
           break;
         }
         updateReelAndLEDs(joystickValue, oldLEDnum, dataPin1);
-
       }
       //reel motor off
       analogWrite(ENA, 0);
@@ -210,6 +222,7 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
 
     Serial.println("About to press button from Cast Mode");
     pressButton();
+    pushButtoncount = 0;
 
 
     //pressButton();
@@ -217,15 +230,27 @@ void TaskCastMode( void *pvParameters __attribute__((unused)) )  // This is a Ta
     xTimerStart(castTimer, 0);
     uint8_t distance = 0;
     uint8_t oldLEDnum = 20;
+    casted = 1;
+    uint8_t buttonDone = 1;
     while(1){
       if((reelFlag | emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
         xTimerStop(castTimer, 0);
+        casted = 1;
+        maxLEDnum = 1;
+        hasBeenAtOneBefore = false;
+        wentAboveOne = false;
         break;
+      }
+      if((pushButtoncount >= 8) && buttonDone){
+        solenoidOff();
+        buttonDone = 0;
       }
       updateDistanceAndLEDs(joystickValue, oldLEDnum, dataPin1);
     }
     
     xEventGroupClearBits(fishingrodEvents, castFlag);
+    pushButtoncount = 0;
+    buttonDone = 1;
   }
 }
 void TaskEmergencyMode( void *pvParameters __attribute__((unused)) )  // This is a Task.

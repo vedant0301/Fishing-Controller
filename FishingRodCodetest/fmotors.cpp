@@ -1,6 +1,10 @@
 #include "fmotors.h"
 int casted;
 
+uint8_t maxLEDnum = 1;
+bool hasBeenAtOneBefore = false;
+bool wentAboveOne = false;
+
 void fmotors_setup() {
   // DC MOTOR
   pinMode(ENA, OUTPUT);
@@ -68,85 +72,121 @@ void updateReelAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
         oldLEDnum = numberofLEDs;
     }
 }
-
 void updateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin) {
     int distance;
     uint8_t numberofLEDs;
 
-    // Determine distance based on joystickValue
+    // Determine distance from joystick
     if (joystickValue < 113) {
-        distance = 5;
-    } else if (joystickValue < 169) {
-        distance = 10;
-    } else if (joystickValue < 282) {
-        distance = 15;
-    } else if (joystickValue < 395) {
-        distance = 20;
-    } else if (joystickValue < 508) {
-        distance = 25;
-    } else if (joystickValue < 621) {
-        distance = 30;
-    } else if (joystickValue < 734) {
-        distance = 35;
-    } else if (joystickValue < 847) {
-        distance = 40;
-    } else if (joystickValue < 960) {
-        distance = 45;
-    } else {
-        distance = 50;
+      distance = 5;
+    }
+    else if (joystickValue < 169){
+       distance = 10;
+    }
+    else if (joystickValue < 282) {
+      distance = 15;
+    }
+    else if (joystickValue < 395) {
+      distance = 20;
+    }
+    else if (joystickValue < 508) {
+      distance = 25;
+      }
+    else if (joystickValue < 621) {
+      distance = 30;
+    }
+    else if (joystickValue < 734) {
+      distance = 35;
+    }
+    else if (joystickValue < 847) {
+      distance = 40;
+      }
+    else if (joystickValue < 960) {
+      distance = 45;
+    }
+    else {
+      distance = 50;
     }
 
-    // Calculate number of LEDs
+    // Calculate LEDs
     numberofLEDs = (distance * 2) / 10;
 
-    // Update LEDs only if numberofLEDs changes
+    // Only update visual LEDs when needed
     if (numberofLEDs != oldLEDnum) {
-        showColor(0, 0, 32, numberofLEDs, pin); // Set LEDs to blue
+        showColor(0, 0, 32, numberofLEDs, pin);
     }
 
-    // **Track highest reached LED count**
-    static uint8_t maxLEDnum = 1;
+    // Track max reached for casting power
+    //static uint8_t maxLEDnum = 1;
     if (numberofLEDs > maxLEDnum) {
-        maxLEDnum = numberofLEDs;  // Store highest LED count
+        maxLEDnum = numberofLEDs;
     }
 
-    // **Ensure user moves joystick before first cast**
-    static bool mustStartAtOne = true;
-    static bool movedAwayFromOne = false;
+    // Core sequence state
+    // static bool hasBeenAtOneBefore = false;
+    // static bool wentAboveOne = false;
 
     if (numberofLEDs == 1) {
-        if (!movedAwayFromOne) {
-            mustStartAtOne = true; // Still need to move up first
+        if (!hasBeenAtOneBefore) {
+            hasBeenAtOneBefore = true;  // First hit of 1
+            wentAboveOne = false;       // Reset upward flag
+        } else if (wentAboveOne && casted == 0) {
+            // Valid full sequence: 1 -> >1 -> 1
+            casted = 1;
+            xTimerStop(castTimer, 0);
+            Casting(maxLEDnum);
+            xTimerStart(castTimer, 0);
+            if(maxLEDnum == 10){
+              vTaskDelay(pdMS_TO_TICKS(230));
+            }
+            else if(maxLEDnum == 9){
+              vTaskDelay(pdMS_TO_TICKS(226));
+            }
+            else if(maxLEDnum == 8){
+              vTaskDelay(pdMS_TO_TICKS(224));//touch early
+            }
+            else if(maxLEDnum == 7){
+              vTaskDelay(pdMS_TO_TICKS(216));//touch late
+            }
+            else if(maxLEDnum == 6){
+              vTaskDelay(pdMS_TO_TICKS(211));//
+            }
+            else if(maxLEDnum == 5){
+              vTaskDelay(pdMS_TO_TICKS(210));//
+            }
+            else if(maxLEDnum == 4){
+              vTaskDelay(pdMS_TO_TICKS(206));
+            }
+            else if(maxLEDnum == 3){
+              vTaskDelay(pdMS_TO_TICKS(202));
+            }
+            else if(maxLEDnum == 2){
+              vTaskDelay(pdMS_TO_TICKS(198));
+            }
+            else if(maxLEDnum == 1){
+              vTaskDelay(pdMS_TO_TICKS(194));
+            }
+            else{
+              vTaskDelay(pdMS_TO_TICKS(200));
+            }
+            //vTaskDelay(pdMS_TO_TICKS(230));
+            releaseButton();
+            maxLEDnum = 1;
+            hasBeenAtOneBefore = false;
+            wentAboveOne = false;
         }
-    } else {
-        movedAwayFromOne = true; // User has moved joystick up
+    } else if (numberofLEDs > 1 && hasBeenAtOneBefore) {
+        wentAboveOne = true;
     }
 
-    if (oldLEDnum == 1 && movedAwayFromOne) {
-        mustStartAtOne = false;
-    }
-
-    // **Casting happens based on the highest LED count reached**
-    if (!mustStartAtOne && numberofLEDs == 1 && casted == 0) {
-        casted = 1;  // Prevent multiple triggers
-        xTimerStop(castTimer, 0);
-        Casting(maxLEDnum);  // Cast using highest LED count reached
-        xTimerStart(castTimer, 0);
-        vTaskDelay(pdMS_TO_TICKS(190));
-        releaseButton();
-
-        // **Reset maxLEDnum after casting**
-        maxLEDnum = 1;
-    }
-
-    // Reset casted flag if joystick moves away from casting zone (more than 1 LED)
+    // Reset casted flag if joystick moves up again
     if (numberofLEDs > 1) {
         casted = 0;
     }
 
-    // Update old LED number for next iteration
     oldLEDnum = numberofLEDs;
 }
+
 
 // void NEWupdateDistanceAndLEDs(int joystickValue, uint8_t& oldLEDnum, uint8_t pin){
 //     // Determine distance based on joystickValue
@@ -280,19 +320,19 @@ void Casting(int Desi_Dist) {
 
     vTaskDelay(pdMS_TO_TICKS(10));
     Cur_Dist++;
-    if(digitalRead(redButton) == LOW){//((emergencyFlag | powerFlag) & xEventGroupGetBits(fishingrodEvents)){
+    if(digitalRead(redButton) == LOW){
       xTimerStop(castTimer, 0);
       digitalWrite(Aplus, LOW);
       digitalWrite(Aminus, LOW);
 
-        Serial.println("abc");//~1ms
-        Serial.println("abcdefghijklmnop");//~4ms
-        Serial.println("abcdefghijklmnop");//~4ms
-        Serial.println("abcdefghijklmnop");//~4ms
-        Serial.println("abcdefghijklmnop");//~4ms
-        Serial.println("abcdefghijklmnop");//~4ms
+      Serial.println("abc");//~1ms
+      Serial.println("abcdefghijklmnop");//~4ms
+      Serial.println("abcdefghijklmnop");//~4ms
+      Serial.println("abcdefghijklmnop");//~4ms
+      Serial.println("abcdefghijklmnop");//~4ms
+      Serial.println("abcdefghijklmnop");//~4ms
+      
       vTaskDelay(pdMS_TO_TICKS(1));
-
       digitalWrite(Bplus, LOW);
       digitalWrite(Bminus, LOW);
       Serial.println("out");
